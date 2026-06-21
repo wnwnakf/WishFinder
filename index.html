@@ -5,83 +5,173 @@
 <title>WishFinder</title>
 
 <style>
+
 body{
-    background:#f7f7f7;
-    font-family:sans-serif;
-    text-align:center;
+background:#f7f7f7;
+font-family:sans-serif;
+text-align:center;
 }
 
 .container{
-    width:500px;
-    margin:auto;
-    background:white;
-    padding:30px;
-    border-radius:20px;
-    box-shadow:0 0 10px lightgray;
+width:700px;
+margin:auto;
+background:white;
+padding:30px;
+border-radius:20px;
+box-shadow:0 0 15px lightgray;
 }
 
 input{
-    width:80%;
-    padding:10px;
-    margin:10px;
+width:80%;
+padding:12px;
+margin:10px;
+border:1px solid lightgray;
+border-radius:10px;
 }
 
 button{
-    padding:10px 20px;
-    background:pink;
-    border:none;
-    border-radius:10px;
-    color:white;
-    cursor:pointer;
+padding:12px 20px;
+border:none;
+border-radius:10px;
+background:pink;
+color:white;
+font-size:16px;
+cursor:pointer;
+margin:5px;
 }
 
-#result{
-    margin-top:20px;
-    font-size:20px;
+.card{
+background:#fff0f5;
+padding:15px;
+margin:15px;
+border-radius:15px;
 }
+
+a{
+color:blue;
+}
+
 </style>
 
 </head>
+
 <body>
 
 <div class="container">
 
 <h1>💖 WishFinder</h1>
 
-<p>찜한 상품 이름을 입력하세요</p>
+<p>SNS나 쇼핑몰에서 찜해 둔 상품을 쉽게 찾기</p>
 
-<input type="text" id="item">
+<input type="text" id="item" placeholder="상품 이름">
 
 <br>
 
-<button onclick="findCategory()">AI 분류하기</button>
+<input type="text" id="link" placeholder="상품 링크">
 
-<div id="result"></div>
+<br>
+
+<button onclick="saveItem()">❤️ 저장하기</button>
+
+<br><br>
+
+<input type="text" id="search" placeholder="검색하기" onkeyup="showItems()">
+
+<h2>❤️ 저장된 찜 목록</h2>
+
+<div id="list"></div>
 
 </div>
 
 <script>
 
-function findCategory(){
+let items=[];
+
+function getCategory(name){
+
+if(name.includes("후드")||name.includes("바지")||name.includes("셔츠"))
+return "👕 의류";
+
+else if(name.includes("운동화")||name.includes("신발"))
+return "👟 신발";
+
+else if(name.includes("립")||name.includes("쿠션"))
+return "💄 화장품";
+
+else if(name.includes("치킨")||name.includes("피자"))
+return "🍕 음식";
+
+else
+return "📦 기타";
+
+}
+
+function saveItem(){
 
 let item=document.getElementById("item").value;
+let link=document.getElementById("link").value;
 
-let category="기타";
+if(item==""){
+alert("상품 이름을 입력하세요");
+return;
+}
 
-if(item.includes("후드") || item.includes("셔츠") || item.includes("바지"))
-category="👕 의류";
+let category=getCategory(item);
 
-else if(item.includes("운동화") || item.includes("신발"))
-category="👟 신발";
+items.push({
+name:item,
+link:link,
+category:category
+});
 
-else if(item.includes("립") || item.includes("쿠션"))
-category="💄 화장품";
+document.getElementById("item").value="";
+document.getElementById("link").value="";
 
-else if(item.includes("치킨") || item.includes("피자"))
-category="🍕 음식";
+showItems();
 
-document.getElementById("result").innerHTML=
-"<h2>"+item+"</h2><br>추천 카테고리 : "+category;
+}
+
+function showItems(){
+
+let keyword=document.getElementById("search").value;
+
+let output="";
+
+for(let i=0;i<items.length;i++){
+
+if(items[i].name.includes(keyword)){
+
+output+=`
+<div class="card">
+
+<h3>${items[i].category} ${items[i].name}</h3>
+
+<a href="${items[i].link}" target="_blank">
+상품 링크 바로가기
+</a>
+
+<br><br>
+
+<button onclick="removeItem(${i})">
+삭제
+</button>
+
+</div>
+`;
+
+}
+
+}
+
+document.getElementById("list").innerHTML=output;
+
+}
+
+function removeItem(index){
+
+items.splice(index,1);
+
+showItems();
 
 }
 
