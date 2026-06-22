@@ -3,9 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SnapSort</title>
+<title>SnapSort AI</title>
 
 <style>
+
 body{
 font-family:sans-serif;
 background:#f5f5f5;
@@ -13,7 +14,7 @@ text-align:center;
 }
 
 .container{
-max-width:800px;
+max-width:900px;
 margin:auto;
 background:white;
 padding:20px;
@@ -21,19 +22,11 @@ border-radius:20px;
 box-shadow:0 0 10px lightgray;
 }
 
-input{
-width:80%;
-padding:10px;
-margin:10px;
-border-radius:10px;
-border:1px solid lightgray;
-}
-
 button{
-padding:10px 20px;
+padding:12px 20px;
+border:none;
 background:#ff9fc5;
 color:white;
-border:none;
 border-radius:10px;
 cursor:pointer;
 }
@@ -47,9 +40,18 @@ border-radius:15px;
 
 img{
 width:200px;
-border-radius:10px;
+border-radius:15px;
 margin-top:10px;
 }
+
+input{
+padding:12px;
+width:70%;
+border-radius:10px;
+border:1px solid lightgray;
+margin-top:10px;
+}
+
 </style>
 </head>
 
@@ -57,27 +59,23 @@ margin-top:10px;
 
 <div class="container">
 
-<h1>📸 SnapSort</h1>
+<h1>📸 SnapSort AI</h1>
 
-<p>스크린샷과 사진을 AI가 자동으로 정리해줍니다.</p>
+<p>사진만 올리면 AI가 자동으로 정리해줍니다.</p>
 
 <input type="file" id="photo">
 
-<br>
+<br><br>
 
-<input type="text" id="title" placeholder="제목">
-
-<br>
-
-<input type="text" id="memo" placeholder="메모">
-
-<br>
-
-<input type="text" id="search" placeholder="검색" onkeyup="showItems()">
+<button onclick="savePhoto()">저장하기</button>
 
 <br><br>
 
-<button onclick="saveItem()">저장하기</button>
+<input
+type="text"
+id="search"
+placeholder="검색"
+onkeyup="showItems()">
 
 <div id="list"></div>
 
@@ -85,29 +83,39 @@ margin-top:10px;
 
 <script>
 
-let items = JSON.parse(localStorage.getItem("items")) || [];
+let items=JSON.parse(localStorage.getItem("items"))||[];
 
-function category(title){
+function category(name){
 
-title=title.toLowerCase();
+name=name.toLowerCase();
 
-if(title.includes("영어")||title.includes("수학")||title.includes("시험"))
+if(name.includes("영어")||
+name.includes("수학")||
+name.includes("시험"))
 return "📚 공부";
 
-if(title.includes("운동화")||title.includes("옷"))
+if(name.includes("운동화")||
+name.includes("옷")||
+name.includes("가방"))
 return "🛒 쇼핑";
 
-if(title.includes("맛집")||title.includes("치킨"))
+if(name.includes("맛집")||
+name.includes("치킨")||
+name.includes("피자"))
 return "🍜 음식";
 
-if(title.includes("일본")||title.includes("여행"))
+if(name.includes("일본")||
+name.includes("여행"))
 return "✈️ 여행";
+
+if(name.includes("게임"))
+return "🎮 취미";
 
 return "📌 기타";
 
 }
 
-function saveItem(){
+function savePhoto(){
 
 let file=document.getElementById("photo").files[0];
 
@@ -122,16 +130,15 @@ reader.onload=function(){
 
 items.push({
 image:reader.result,
-title:document.getElementById("title").value,
-memo:document.getElementById("memo").value,
-category:category(document.getElementById("title").value)
+name:file.name,
+category:category(file.name)
 });
 
 localStorage.setItem("items",JSON.stringify(items));
 
 showItems();
 
-};
+}
 
 reader.readAsDataURL(file);
 
@@ -145,19 +152,19 @@ let output="";
 
 for(let i=0;i<items.length;i++){
 
-if(items[i].title.includes(keyword)){
+if(items[i].name.includes(keyword)){
 
 output+=`
 <div class="card">
 
-<h3>${items[i].category} ${items[i].title}</h3>
+<h2>${items[i].category}</h2>
 
 <img src="${items[i].image}">
 
-<p>📝 ${items[i].memo}</p>
+<p>${items[i].name}</p>
 
 <button onclick="removeItem(${i})">
-삭제
+🗑 삭제
 </button>
 
 </div>
