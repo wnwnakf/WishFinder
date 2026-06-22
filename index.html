@@ -148,4 +148,34 @@
             const result = await net.classify(imgElement);
             
             // AI가 예측한 결과값 중 가장 확률이 높은 첫 번째 데이터 추출
-            const topPrediction =
+            const topPrediction = result[0].className.toLowerCase();
+            const confidence = (result[0].probability * 100).toFixed(1);
+            
+            status.innerText = "상태: 💡 이미지 분류 완료!";
+            status.style.color = "#56d364";
+
+            // 기존 폴더 테두리 초기화
+            document.querySelectorAll('.folder').forEach(f => f.style.borderColor = '#30363d');
+
+            // 3. AI 분석 키워드 기반 실제 폴더 자동 분류 로직
+            if (topPrediction.includes('person') || topPrediction.includes('man') || topPrediction.includes('dog') || topPrediction.includes('cat') || topPrediction.includes('face') || topPrediction.includes('animal')) {
+                // 인물/생명체 분류
+                document.getElementById('list-living').innerHTML = `📸 <b>${file.name}</b><br><span class="ai-brain">[AI 판독 결과]: 이 사진은 생명체/인물 카테고리로 분류되었습니다. (신뢰도: ${confidence}%)</span>`;
+                document.getElementById('fold-living').style.borderColor = '#58a6ff';
+            } else if (topPrediction.includes('screen') || topPrediction.includes('computer') || topPrediction.includes('web') || topPrediction.includes('phone') || topPrediction.includes('electronics')) {
+                // 전자기기/스크린샷 분류
+                document.getElementById('list-tech').innerHTML = `📸 <b>${file.name}</b><br><span class="ai-brain">[AI 판독 결과]: 이 사진은 전자기기 및 디스플레이 카테고리로 분류되었습니다. (신뢰도: ${confidence}%)</span>`;
+                document.getElementById('fold-tech').style.borderColor = '#58a6ff';
+            } else {
+                // 그 외 일상 사물/소품 분류
+                document.getElementById('list-object').innerHTML = `📸 <b>${file.name}</b><br><span class="ai-brain">[AI 판독 결과]: 이 사진은 일상 사물 및 배경 카테고리로 분류되었습니다. (신뢰도: ${confidence}%, 분석명: ${topPrediction})</span>`;
+                document.getElementById('fold-object').style.borderColor = '#58a6ff';
+            }
+        }, 500);
+    }
+
+    // 웹앱 실행
+    loadAI();
+</script>
+</body>
+</html>
