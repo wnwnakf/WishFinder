@@ -1,144 +1,52 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI 갤러리 자동 분류 시스템</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet"></script>
-    <style>
-        body {
-            font-family: 'Malgun Gothic', sans-serif;
-            background-color: #0f172a;
-            color: #f8fafc;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-        }
-        .container { max-width: 600px; width: 100%; }
-        header { text-align: center; margin-bottom: 25px; border-bottom: 2px solid #334155; padding-bottom: 15px; }
-        h1 { color: #38bdf8; font-size: 1.5rem; margin: 0; }
-        
-        /* 사진 올리는 주황색 박스 */
-        .upload-zone {
-            background-color: #1e293b;
-            border: 3px dashed #38bdf8;
-            border-radius: 12px;
-            padding: 30px;
-            text-align: center;
-            cursor: pointer;
-            margin-bottom: 20px;
-        }
-        
-        /* 현재 AI 진행 상황 안내창 */
-        .ai-status {
-            background-color: #0284c7;
-            padding: 10px;
-            border-radius: 8px;
-            text-align: center;
-            font-weight: bold;
-            margin-bottom: 25px;
-        }
-        
-        /* 사진이 들어갈 진짜 분류 폴더들 */
-        .folder-container { display: flex; flex-direction: column; gap: 20px; }
-        .folder {
-            background-color: #1e293b;
-            border: 2px solid #475569;
-            border-radius: 12px;
-            padding: 15px;
-        }
-        .folder-title { font-weight: bold; font-size: 1.1rem; color: #38bdf8; margin-bottom: 10px; display: flex; align-items: center; gap: 5px; }
-        
-        /* 사진이 분류되어 들어왔을 때 보여지는 이미지 스타일 */
-        .classified-img {
-            max-width: 150px;
-            max-height: 150px;
-            border-radius: 8px;
-            border: 2px solid #38bdf8;
-            margin-top: 10px;
-            display: block;
-        }
-        .empty-text { color: #94a3b8; font-size: 0.9rem; }
-    </style>
-</head>
-<body>
+import os
+import shutil
+import numpy as np
+from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2, preprocess_input, decode_predictions
+from tensorflow.keras.preprocessing import image
 
-<div class="container">
-    <header>
-        <h1>AI 스마트 갤러리 폴더 분류기</h1>
-        <p style="color: #94a3b8; margin: 5px 0 0 0; font-size: 0.9rem;">내 폰의 사진을 분석하여 알맞은 폴더로 진짜 이동시킵니다.</p>
-    </header>
+model = MobileNetV2(weights='imagenet')
 
-    <div class="upload-zone" onclick="document.getElementById('gallery-picker').click()">
-        <span style="font-size: 3rem;">📸</span>
-        <p style="margin: 10px 0 0 0; font-weight: bold;">여기를 눌러 갤러리에서 분류할 사진 선택</p>
-        <input type="file" id="gallery-picker" accept="image/*" style="display: none;" onchange="startAIFilter(event)">
-        <img id="hidden-ai-img" style="display:none; max-width:100px;">
-    </div>
+label_map = {
+    "person": ["person", "man", "woman", "boy", "girl"],
+    "animal": ["dog", "cat", "bird", "horse"],
+    "food": ["pizza", "burger", "cake", "apple", "banana"],
+    "vehicle": ["car", "bus", "truck", "train", "motorcycle"],
+    "nature": ["mountain", "sea", "forest", "sky", "valley"]
+}
 
-    <div class="ai-status" id="status-bar">알림: 인공지능 컴퓨터가 켜지는 중... 잠시만 기다려주세요!</div>
+def classify(img_path):
+    img = image.load_img(img_path, target_size=(224, 224))
+    x = image.img_to_array(img)
+    x = np.expand_dims(x, axis=0)
+    x = preprocess_input(x)
 
-    <div class="folder-container">
-        <div class="folder" id="folder-people">
-            <div class="folder-title">👤 [1번 폴더] 사람 / 친구 / 동물 구역</div>
-            <div id="content-people" class="empty-text">아직 분류되어 들어온 사진이 없습니다.</div>
-        </div>
+    preds = model.predict(x)
+    result = decode_predictions(preds, top=3)[0]
 
-        <div class="folder" id="folder-things">
-            <div class="folder-title">📦 [2번 폴더] 일상 사물 / 가구 / 학용품 구역</div>
-            <div id="content-things" class="empty-text">아직 분류되어 들어온 사진이 없습니다.</div>
-        </div>
+    for _, label, prob in result:
+        label = label.lower()
 
-        <div class="folder" id="folder-tech">
-            <div class="folder-title">💻 [3번 폴더] 전자기기 / 모니터 / 기타 구역</div>
-            <div id="content-tech" class="empty-text">아직 분류되어 들어온 사진이 없습니다.</div>
-        </div>
-    </div>
-</div>
+        for category, keywords in label_map.items():
+            if any(k in label for k in keywords):
+                return category
 
-<script>
-    let aiModel;
+    return "other"
 
-    // 사이트가 열리자마자 백그라운드에서 진짜 AI를 로드함
-    async function initAI() {
-        const statusBar = document.getElementById('status-bar');
-        try {
-            aiModel = await mobilenet.load();
-            statusBar.innerText = "준비 완료! 갤러리에서 사진을 올리면 AI가 진짜로 분류해 줍니다.";
-            statusBar.style.backgroundColor = "#16a34a"; // 초록색으로 변경
-        } catch (e) {
-            statusBar.innerText = "오류: 인터넷 연결을 확인해 주세요.";
-            statusBar.style.backgroundColor = "#dc2626";
-        }
-    }
+input_folder = "input_images"
+output_folder = "output"
 
-    // 사진을 선택했을 때 진짜로 AI가 분석해서 폴더를 바꿔주는 핵심 함수
-    async function startAIFilter(event) {
-        const file = event.target.files[0];
-        if (!file) return;
+os.makedirs(output_folder, exist_ok=True)
 
-        const statusBar = document.getElementById('status-bar');
-        const hiddenImg = document.getElementById('hidden-ai-img');
-        
-        // 올린 사진 데이터 읽어서 주소 만들기
-        hiddenImg.src = URL.createObjectURL(file);
-        
-        if (!aiModel) {
-            statusBar.innerText = "아직 인공지능 엔진이 켜지지 않았습니다. 1초만 기다린 후 다시 시도해 주세요!";
-            return;
-        }
+for file in os.listdir(input_folder):
+    if not file.lower().endswith((".jpg", ".png", ".jpeg")):
+        continue
 
-        statusBar.innerText = "🤖 AI가 사진 속 픽셀을 스캔하며 무엇인지 분석하고 있습니다...";
-        statusBar.style.backgroundColor = "#2563eb"; // 파란색
+    path = os.path.join(input_folder, file)
+    category = classify(path)
 
-        // AI 분석을 위해 아주 잠깐 대기한 뒤 진짜 판별 시작
-        setTimeout(async () => {
-            const predictions = await aiModel.classify(hiddenImg);
-            const resultText = predictions[0].className.toLowerCase(); // AI가 판독한 영문 이름
-            
-            statusBar.innerText = "✓ AI 분석 완료! 사진을 알맞은 폴더로 이동시켰습니다.";
-            statusBar.style.backgroundColor = "#16a34a"; // 다시 초록색
+    save_dir = os.path.join(output_folder, category)
+    os.makedirs(save_dir, exist_ok=True)
 
-            // 모든 폴더 테두리 원래대로 초기화
-            document.getElementById('folder-people').style.borderColor = '#475569
+    shutil.copy(path, os.path.join(save_dir, file))
+
+print("사진 정리 완료!")
