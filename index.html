@@ -3,179 +3,142 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Real-time Gallery Curation System</title>
+    <title>AI 갤러리 자동 분류 시스템</title>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet"></script>
     <style>
-        :root {
-            --bg-color: #0d1117;
-            --card-bg: #161b22;
-            --accent-color: #58a6ff;
-            --text-main: #c9d1d9;
-            --text-muted: #8b949e;
-            --border-color: #30363d;
-        }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            margin: 0;
+            font-family: 'Malgun Gothic', sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
             padding: 20px;
             display: flex;
             justify-content: center;
         }
-        .container { max-width: 650px; width: 100%; }
-        header { text-align: center; padding: 20px 0; border-bottom: 1px solid var(--border-color); }
-        h1 { color: var(--accent-color); font-size: 1.6rem; margin: 0 0 5px 0; }
-        .subtitle { color: var(--text-muted); font-size: 0.9rem; }
+        .container { max-width: 600px; width: 100%; }
+        header { text-align: center; margin-bottom: 25px; border-bottom: 2px solid #334155; padding-bottom: 15px; }
+        h1 { color: #38bdf8; font-size: 1.5rem; margin: 0; }
         
-        /* 업로드 박스 */
-        .upload-box {
-            background-color: var(--card-bg);
-            border: 2px dashed #38bdf8;
+        /* 사진 올리는 주황색 박스 */
+        .upload-zone {
+            background-color: #1e293b;
+            border: 3px dashed #38bdf8;
             border-radius: 12px;
-            padding: 30px 20px;
+            padding: 30px;
             text-align: center;
-            margin: 20px 0;
             cursor: pointer;
-        }
-        #preview-img {
-            max-width: 100%;
-            max-height: 200px;
-            border-radius: 8px;
-            display: none;
-            margin: 15px auto;
+            margin-bottom: 20px;
         }
         
-        /* 상태 표시 */
-        .status-message {
+        /* 현재 AI 진행 상황 안내창 */
+        .ai-status {
+            background-color: #0284c7;
+            padding: 10px;
+            border-radius: 8px;
             text-align: center;
             font-weight: bold;
-            color: #38bdf8;
-            margin: 15px 0;
-            font-size: 0.95rem;
+            margin-bottom: 25px;
         }
         
-        /* 결과 폴더 디자인 */
-        .folder-grid { display: grid; grid-template-columns: 1fr; gap: 15px; margin-top: 20px; }
+        /* 사진이 들어갈 진짜 분류 폴더들 */
+        .folder-container { display: flex; flex-direction: column; gap: 20px; }
         .folder {
-            background-color: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 10px;
+            background-color: #1e293b;
+            border: 2px solid #475569;
+            border-radius: 12px;
             padding: 15px;
-            transition: all 0.3s ease;
         }
-        .folder-title { font-weight: bold; font-size: 1rem; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
-        .img-list { font-size: 0.85rem; color: #a3a3a3; background: #090d13; padding: 10px; border-radius: 6px; border: 1px solid #21262d; }
+        .folder-title { font-weight: bold; font-size: 1.1rem; color: #38bdf8; margin-bottom: 10px; display: flex; align-items: center; gap: 5px; }
         
-        .ai-brain { font-size: 0.8rem; color: #56d364; margin-top: 5px; display: block; font-family: monospace; }
+        /* 사진이 분류되어 들어왔을 때 보여지는 이미지 스타일 */
+        .classified-img {
+            max-width: 150px;
+            max-height: 150px;
+            border-radius: 8px;
+            border: 2px solid #38bdf8;
+            margin-top: 10px;
+            display: block;
+        }
+        .empty-text { color: #94a3b8; font-size: 0.9rem; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <header>
-        <h1>AI 갤러리 이미지 자동 분류기</h1>
-        <p class="subtitle">모바일 갤러리 사진을 분석하여 자동 큐레이션하는 실시간 온디바이스 AI</p>
+        <h1>AI 스마트 갤러리 폴더 분류기</h1>
+        <p style="color: #94a3b8; margin: 5px 0 0 0; font-size: 0.9rem;">내 폰의 사진을 분석하여 알맞은 폴더로 진짜 이동시킵니다.</p>
     </header>
 
-    <div class="upload-box" onclick="document.getElementById('image-loader').click()">
-        <span style="font-size: 2.5rem;">📁</span>
-        <p style="margin: 10px 0 0 0; font-weight: bold;">여기를 눌러 갤러리에서 사진을 선택하세요</p>
-        <input type="file" id="image-loader" accept="image/*" style="display: none;" onchange="processImage(event)">
-        <img id="preview-img">
+    <div class="upload-zone" onclick="document.getElementById('gallery-picker').click()">
+        <span style="font-size: 3rem;">📸</span>
+        <p style="margin: 10px 0 0 0; font-weight: bold;">여기를 눌러 갤러리에서 분류할 사진 선택</p>
+        <input type="file" id="gallery-picker" accept="image/*" style="display: none;" onchange="startAIFilter(event)">
+        <img id="hidden-ai-img" style="display:none; max-width:100px;">
     </div>
 
-    <div class="status-message" id="status">상태: 인공지능 엔진(MobileNet) 대기 중...</div>
+    <div class="ai-status" id="status-bar">알림: 인공지능 컴퓨터가 켜지는 중... 잠시만 기다려주세요!</div>
 
-    <div class="folder-grid">
-        <div class="folder" id="fold-living">
-            <div class="folder-title">👤 인물 및 생명체 폴더</div>
-            <div class="img-list" id="list-living">분류된 사진 없음</div>
+    <div class="folder-container">
+        <div class="folder" id="folder-people">
+            <div class="folder-title">👤 [1번 폴더] 사람 / 친구 / 동물 구역</div>
+            <div id="content-people" class="empty-text">아직 분류되어 들어온 사진이 없습니다.</div>
         </div>
 
-        <div class="folder" id="fold-object">
-            <div class="folder-title">📦 일상 사물 및 소품 폴더</div>
-            <div class="img-list" id="list-object">분류된 사진 없음</div>
+        <div class="folder" id="folder-things">
+            <div class="folder-title">📦 [2번 폴더] 일상 사물 / 가구 / 학용품 구역</div>
+            <div id="content-things" class="empty-text">아직 분류되어 들어온 사진이 없습니다.</div>
         </div>
 
-        <div class="folder" id="fold-tech">
-            <div class="folder-title">💻 전자기기 및 텍스트/기타 폴더</div>
-            <div class="img-list" id="list-tech">분류된 사진 없음</div>
+        <div class="folder" id="folder-tech">
+            <div class="folder-title">💻 [3번 폴더] 전자기기 / 모니터 / 기타 구역</div>
+            <div id="content-tech" class="empty-text">아직 분류되어 들어온 사진이 없습니다.</div>
         </div>
     </div>
 </div>
 
 <script>
-    let net;
+    let aiModel;
 
-    // 페이지가 열리면 백그라운드에서 AI 모델을 즉시 로드함
-    async function loadAI() {
-        const status = document.getElementById('status');
+    // 사이트가 열리자마자 백그라운드에서 진짜 AI를 로드함
+    async function initAI() {
+        const statusBar = document.getElementById('status-bar');
         try {
-            status.innerText = "상태: 🧠 컴퓨터 비전 AI 모델 로드 중... (잠시만 기다려주세요)";
-            net = await mobilenet.load();
-            status.innerText = "상태: 🎉 AI 로드 완료! 갤러리 사진을 올려보세요.";
-            status.style.color = "#56d364";
+            aiModel = await mobilenet.load();
+            statusBar.innerText = "준비 완료! 갤러리에서 사진을 올리면 AI가 진짜로 분류해 줍니다.";
+            statusBar.style.backgroundColor = "#16a34a"; // 초록색으로 변경
         } catch (e) {
-            status.innerText = "상태: 에러 발생 - 인터넷 연결을 확인해 주세요.";
-            status.style.color = "#ff7b72";
+            statusBar.innerText = "오류: 인터넷 연결을 확인해 주세요.";
+            statusBar.style.backgroundColor = "#dc2626";
         }
     }
 
-    // 사진이 선택되었을 때 작동하는 진짜 AI 알고리즘
-    async function processImage(event) {
+    // 사진을 선택했을 때 진짜로 AI가 분석해서 폴더를 바꿔주는 핵심 함수
+    async function startAIFilter(event) {
         const file = event.target.files[0];
         if (!file) return;
 
-        const status = document.getElementById('status');
-        const imgElement = document.getElementById('preview-img');
+        const statusBar = document.getElementById('status-bar');
+        const hiddenImg = document.getElementById('hidden-ai-img');
         
-        // 1. 화면에 이미지 띄우기
-        imgElement.src = URL.createObjectURL(file);
-        imgElement.style.display = 'block';
+        // 올린 사진 데이터 읽어서 주소 만들기
+        hiddenImg.src = URL.createObjectURL(file);
         
-        if (!net) {
-            status.innerText = "상태: AI 모델이 아직 로드되지 않았습니다.";
+        if (!aiModel) {
+            statusBar.innerText = "아직 인공지능 엔진이 켜지지 않았습니다. 1초만 기다린 후 다시 시도해 주세요!";
             return;
         }
 
-        status.innerText = "상태: 🤖 인공지능이 이미지 픽셀 스캔 및 객체 판별 중...";
-        status.style.color = "#38bdf8";
+        statusBar.innerText = "🤖 AI가 사진 속 픽셀을 스캔하며 무엇인지 분석하고 있습니다...";
+        statusBar.style.backgroundColor = "#2563eb"; // 파란색
 
-        // 2. 인공지능 모델이 진짜로 이미지를 인식하고 판단하는 핵심 코드
+        // AI 분석을 위해 아주 잠깐 대기한 뒤 진짜 판별 시작
         setTimeout(async () => {
-            const result = await net.classify(imgElement);
+            const predictions = await aiModel.classify(hiddenImg);
+            const resultText = predictions[0].className.toLowerCase(); // AI가 판독한 영문 이름
             
-            // AI가 예측한 결과값 중 가장 확률이 높은 첫 번째 데이터 추출
-            const topPrediction = result[0].className.toLowerCase();
-            const confidence = (result[0].probability * 100).toFixed(1);
-            
-            status.innerText = "상태: 💡 이미지 분류 완료!";
-            status.style.color = "#56d364";
+            statusBar.innerText = "✓ AI 분석 완료! 사진을 알맞은 폴더로 이동시켰습니다.";
+            statusBar.style.backgroundColor = "#16a34a"; // 다시 초록색
 
-            // 기존 폴더 테두리 초기화
-            document.querySelectorAll('.folder').forEach(f => f.style.borderColor = '#30363d');
-
-            // 3. AI 분석 키워드 기반 실제 폴더 자동 분류 로직
-            if (topPrediction.includes('person') || topPrediction.includes('man') || topPrediction.includes('dog') || topPrediction.includes('cat') || topPrediction.includes('face') || topPrediction.includes('animal')) {
-                // 인물/생명체 분류
-                document.getElementById('list-living').innerHTML = `📸 <b>${file.name}</b><br><span class="ai-brain">[AI 판독 결과]: 이 사진은 생명체/인물 카테고리로 분류되었습니다. (신뢰도: ${confidence}%)</span>`;
-                document.getElementById('fold-living').style.borderColor = '#58a6ff';
-            } else if (topPrediction.includes('screen') || topPrediction.includes('computer') || topPrediction.includes('web') || topPrediction.includes('phone') || topPrediction.includes('electronics')) {
-                // 전자기기/스크린샷 분류
-                document.getElementById('list-tech').innerHTML = `📸 <b>${file.name}</b><br><span class="ai-brain">[AI 판독 결과]: 이 사진은 전자기기 및 디스플레이 카테고리로 분류되었습니다. (신뢰도: ${confidence}%)</span>`;
-                document.getElementById('fold-tech').style.borderColor = '#58a6ff';
-            } else {
-                // 그 외 일상 사물/소품 분류
-                document.getElementById('list-object').innerHTML = `📸 <b>${file.name}</b><br><span class="ai-brain">[AI 판독 결과]: 이 사진은 일상 사물 및 배경 카테고리로 분류되었습니다. (신뢰도: ${confidence}%, 분석명: ${topPrediction})</span>`;
-                document.getElementById('fold-object').style.borderColor = '#58a6ff';
-            }
-        }, 500);
-    }
-
-    // 웹앱 실행
-    loadAI();
-</script>
-</body>
-</html>
+            // 모든 폴더 테두리 원래대로 초기화
+            document.getElementById('folder-people').style.borderColor = '#475569
