@@ -3,131 +3,98 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI SNS Curation Dashboard</title>
+    <title>AI Smart Gallery Curation System</title>
     <style>
+        :root {
+            --bg-color: #0d1117;
+            --card-bg: #161b22;
+            --accent-color: #58a6ff;
+            --text-main: #c9d1d9;
+            --text-muted: #8b949e;
+            --border-color: #30363d;
+        }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: #0b0f19;
-            color: #f3f4f6;
+            background-color: var(--bg-color);
+            color: var(--text-main);
             margin: 0;
             padding: 20px;
             display: flex;
             justify-content: center;
         }
+
         .container {
-            max-width: 800px;
+            max-width: 700px;
             width: 100%;
         }
+
         header {
             text-align: center;
             padding: 30px 0;
-            border-bottom: 1px solid #1f2937;
+            border-bottom: 1px solid var(--border-color);
         }
+
         h1 {
-            color: #38bdf8;
-            font-size: 2rem;
+            color: var(--accent-color);
+            font-size: 1.8rem;
+            margin: 0 0 10px 0;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin: 0;
+        }
+
+        /* 파일 업로드 섹션 */
+        .upload-section {
+            background-color: var(--card-bg);
+            border: 2px dashed var(--accent-color);
+            border-radius: 12px;
+            padding: 40px 20px;
+            text-align: center;
+            margin: 30px 0;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .upload-section:hover {
+            transform: scale(1.01);
+        }
+
+        .upload-icon {
+            font-size: 3rem;
             margin-bottom: 10px;
         }
-        .subtitle {
-            color: #9ca3af;
-            font-size: 1rem;
+
+        #file-input {
+            display: none;
         }
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-            margin-top: 30px;
-        }
-        .card {
-            background-color: #111827;
-            border: 1px solid #1f2937;
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        }
-        .tag {
-            display: inline-block;
-            padding: 4px 8px;
-            border-radius: 6px;
-            font-size: 0.8rem;
+
+        .btn-upload {
+            background-color: var(--accent-color);
+            color: #ffffff;
+            border: none;
+            padding: 10px 20px;
             font-weight: bold;
-            margin-bottom: 15px;
-        }
-        .tag-study { background-color: #0369a1; color: #e0f2fe; }
-        .tag-vibe { background-color: #6d28d9; color: #f5f3ff; }
-        .tag-life { background-color: #047857; color: #ecfdf5; }
-        .tag-idea { background-color: #b45309; color: #fffbeb; }
-        ul {
-            padding-left: 20px;
-            margin: 0 0 15px 0;
-            color: #d1d5db;
-        }
-        li { margin-bottom: 8px; font-size: 0.95rem; }
-        .situation {
-            font-size: 0.85rem;
-            color: #9ca3af;
-            background-color: #1f2937;
-            padding: 8px;
             border-radius: 6px;
+            margin-top: 15px;
+            cursor: pointer;
         }
-        footer {
+
+        /* 분석 애니메이션 */
+        .loading-section {
+            display: none;
             text-align: center;
-            margin-top: 50px;
-            padding-top: 20px;
-            border-top: 1px solid #1f2937;
-            color: #6b7280;
-            font-size: 0.85rem;
+            margin: 20px 0;
         }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <header>
-            <h1>AI 기반 SNS 저장 콘텐츠 큐레이션</h1>
-            <p class="subtitle">인공지능을 통해 무분별한 정보 과부하 문제를 해결한 나만의 대시보드</p>
-        </header>
 
-        <div class="grid">
-            <div class="card">
-                <span class="tag tag-study">🔥 시험 기간 치트키</span>
-                <ul>
-                    <li>20분 만에 끝내는 효율적인 영어 단어 연상 암기법</li>
-                    <li>수학 고난도 오답노트 작성법 및 원인 분석 템플릿</li>
-                </ul>
-                <div class="situation">🎯 추천 상황: 시험공부 및 자습 시간 초효율 집중 필요 시</div>
-            </div>
-
-            <div class="card">
-                <span class="tag tag-vibe">📸 주말 감성 충전</span>
-                <ul>
-                    <li>스마트폰 기본 카메라를 활용한 인스타 감성 보정 수치</li>
-                    <li>성수동 및 홍대 주변 팝업스토어 월간 핫플레이스 지도</li>
-                </ul>
-                <div class="situation">🎯 추천 상황: 시험 끝난 주말, 친구들과 약속 기획 시</div>
-            </div>
-
-            <div class="card">
-                <span class="tag tag-life">🥗 갓생 챌린지 루틴</span>
-                <ul>
-                    <li>일주일 단기 영양 균형 다이어트 식단 및 편의점 조합</li>
-                    <li>아침 공복 10분 스트레칭 및 수면 밀도 향상 가이드</li>
-                </ul>
-                <div class="situation">🎯 추천 상황: 학업 스트레스로 신체 리듬 관리가 필요할 때</div>
-            </div>
-
-            <div class="card">
-                <span class="tag tag-idea">🎨 크리에이티브 영감</span>
-                <ul>
-                    <li>일상 브이로그 및 숏폼 영상 감성 배경음악(BGM) 리스트</li>
-                    <li>무료 디자인 툴 활용 학급 포스터 배색 조합 가이드</li>
-                </ul>
-                <div class="situation">🎯 추천 상황: 수행평가 발표 자료 및 동아리 홍보물 제작 시</div>
-            </div>
-        </div>
-
-        <footer>
-            <p>본 사이트는 생성형 인공지능(AI)의 데이터 구조화 알고리즘을 활용하여 제작되었습니다.</p>
-        </footer>
-    </div>
-</body>
-</html>
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border-left-color: var(--accent-color);
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px auto;
