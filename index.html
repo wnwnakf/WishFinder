@@ -1,50 +1,27 @@
-from flask import Flask, render_template, request, redirect
-import os
-import shutil
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI Photo Sorter</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
 
-app = Flask(__name__)
+<body>
+    <div class="container">
 
-UPLOAD_FOLDER = "uploads"
-OUTPUT_FOLDER = "output"
+        <h1>📸 AI 갤러리 정리 시스템</h1>
+        <p>사진을 업로드하면 자동으로 분류됩니다</p>
 
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-os.makedirs(OUTPUT_FOLDER, exist_ok=True)
+        <form method="POST" enctype="multipart/form-data">
+            <input type="file" name="file">
+            <button type="submit">분류하기</button>
+        </form>
 
-# 간단 AI 분류 (안정 + 수행평가용)
-def classify(filename):
-    name = filename.lower()
+        {% if result %}
+        <div class="result">
+            ✅ 분류 결과: <b>{{ result }}</b>
+        </div>
+        {% endif %}
 
-    if any(x in name for x in ["dog", "cat", "bird"]):
-        return "animal"
-    elif any(x in name for x in ["pizza", "burger", "food", "cake"]):
-        return "food"
-    elif any(x in name for x in ["car", "bus", "train"]):
-        return "vehicle"
-    elif any(x in name for x in ["selfie", "person", "me"]):
-        return "person"
-    else:
-        return "nature"
-
-@app.route("/", methods=["GET", "POST"])
-def index():
-    result = None
-
-    if request.method == "POST":
-        file = request.files["file"]
-        if file:
-            path = os.path.join(UPLOAD_FOLDER, file.filename)
-            file.save(path)
-
-            category = classify(file.filename)
-
-            save_dir = os.path.join(OUTPUT_FOLDER, category)
-            os.makedirs(save_dir, exist_ok=True)
-
-            shutil.copy(path, os.path.join(save_dir, file.filename))
-
-            result = category
-
-    return render_template("index.html", result=result)
-
-if __name__ == "__main__":
-    app.run(debug=True)
+    </div>
+</body>
+</html>
